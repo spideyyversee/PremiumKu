@@ -1,64 +1,87 @@
--- 1. Tabel Profiles (Extends Supabase Auth User)
-create table profiles (
-  id uuid references auth.users on delete cascade primary key,
-  full_name text,
-  phone text,
-  avatar_url text,
-  role text default 'user' check (role in ('user', 'admin')),
-  updated_at timestamp with time zone default timezone('utc'::text, now())
+-- 1. RESET (Hapus tabel lama agar bersih)
+DROP TABLE IF EXISTS transactions;
+DROP TABLE IF EXISTS products;
+DROP TABLE IF EXISTS profiles;
+
+-- 2. TABEL PROFILES (Menyimpan data user & admin)
+CREATE TABLE profiles (
+id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
+full_name TEXT,
+phone TEXT,
+avatar_url TEXT,
+role TEXT DEFAULT 'user' CHECK (role IN ('user', 'admin')),
+created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
+updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- 2. Tabel Products (Manajemen Aplikasi Premium)
-create table products (
-  id uuid default gen_random_uuid() primary key,
-  name text not null,
-  description text,
-  category text,
-  price numeric not null,
-  stock_status text default 'in_stock' check (stock_status in ('in_stock', 'out_of_stock')),
-  duration_days int default 30,
-  is_popular boolean default false,
-  created_at timestamp with time zone default timezone('utc'::text, now())
+-- 3. TABEL PRODUCTS (Katalog Aplikasi)
+CREATE TABLE products (
+id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+name TEXT NOT NULL,
+description TEXT,
+category TEXT,
+price NUMERIC NOT NULL,
+original_price NUMERIC,
+stock_status TEXT DEFAULT 'in_stock' CHECK (stock_status IN ('in_stock', 'out_of_stock')),
+duration TEXT DEFAULT '30 Hari',
+is_popular BOOLEAN DEFAULT false,
+image_url TEXT,
+created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- 3. Tabel Transactions (Integrasi Midtrans)
-create table transactions (
-  id uuid default gen_random_uuid() primary key,
-  user_id uuid references profiles(id) on delete cascade,
-  product_id uuid references products(id),
-  order_id text unique not null, -- ID untuk Midtrans
-  amount numeric not null,
-  status text default 'pending' check (status in ('pending', 'success', 'failed', 'expired')),
-  payment_method text,
-  created_at timestamp with time zone default timezone('utc'::text, now())
+-- 4. TABEL TRANSACTIONS (Riwayat Pembelian)
+CREATE TABLE transactions (
+id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
+product_id UUID REFERENCES products(id),
+order_id TEXT UNIQUE NOT NULL, -- ID Order Midtrans
+amount NUMERIC NOT NULL,
+status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'success', 'failed', 'expired')),
+payment_method TEXT,
+snap_token TEXT,
+created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
 );
 
--- ENABLE ROW LEVEL SECURITY (RLS)
-alter table profiles enable row level security;
-alter table products enable row level security;
-alter table transactions enable row level security;
+-- 5. AKTIFKAN SECURITY (Row Level Security)
+ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
+ALTER TABLE products ENABLE ROW LEVEL SECURITY;
+ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
 
--- POLICIES
--- Profiles: User hanya bisa lihat/edit data sendiri
-create policy "Users can view own profile" on profiles for select using (auth.uid() = id);
-create policy "Users can update own profile" on profiles for update using (auth.uid() = id);
+-- 6. KEBIJAKAN AKSES (Policies)
 
--- Products: Semua orang bisa lihat, hanya admin bisa modifikasi
-create policy "Anyone can view products" on products for select using (true);
+-- Profiles: Semua orang bisa lihat profil (untuk review dll), tapi edit punya sendiri
+CREATE POLICY "Public profiles are viewable by everyone" ON profiles FOR SELECT USING (true);
+CREATE POLICY "Users can update own profile" ON profiles FOR UPDATE USING (auth.uid() = id);
 
--- Transactions: User hanya bisa lihat transaksi milik sendiri
-create policy "Users can view own transactions" on transactions for select using (auth.uid() = user_id);
+-- Products: Semua bisa lihat, Admin yang bisa edit
+CREATE POLICY "Products are viewable by everyone" ON products FOR SELECT USING (true);
+CREATE POLICY "Admins can insert products" ON products FOR INSERT WITH CHECK (auth.uid() IN (SELECT id FROM profiles WHERE role = 'admin'));
+CREATE POLICY "Admins can update products" ON products FOR UPDATE USING (auth.uid() IN (SELECT id FROM profiles WHERE role = 'admin'));
+CREATE POLICY "Admins can delete products" ON products FOR DELETE USING (auth.uid() IN (SELECT id FROM profiles WHERE role = 'admin'));
 
--- TRIGGER: Buat profil otomatis saat user Register di Supabase Auth
-create function public.handle_new_user()
-returns trigger as $$
-begin
-  insert into public.profiles (id, full_name, phone)
-  values (new.id, new.raw_user_meta_data->>'full_name', new.raw_user_meta_data->>'phone');
-  return new;
-end;
-$$ language plpgsql security definer;
+-- Transactions: User lihat punya sendiri, Admin lihat semua
+CREATE POLICY "Users can view own transactions" ON transactions FOR SELECT USING (auth.uid() = user_id);
+CREATE POLICY "Admins can view all transactions" ON transactions FOR SELECT USING (auth.uid() IN (SELECT id FROM profiles WHERE role = 'admin'));
 
-create trigger on_auth_user_created
-  after insert on auth.users
-  for each row execute procedure public.handle_new_user();
+-- 7. TRIGGER OTOMATIS (New User -> Profile)
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS TRIGGER AS $$
+BEGIN
+INSERT INTO public.profiles (id, full_name, phone, role)
+VALUES (
+new.id,
+new.raw_user_meta_data->>'full_name',
+new.raw_user_meta_data->>'phone',
+COALESCE(new.raw_user_meta_data->>'role', 'user')
+);
+RETURN new;
+END;
+
+$$
+LANGUAGE plpgsql SECURITY DEFINER;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();
+$$

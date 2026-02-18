@@ -1,14 +1,21 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import ProductCard from "@/components/ProductCard";
-import { Zap, ShieldCheck, CreditCard, Headphones } from "lucide-react";
+import { createClient } from "@/utils/supabase/server";
 
-export default function HomePage() {
+export default async function HomePage() {
+  // 👇 PERBAIKAN 1: Tambahkan 'await'
+  const supabase = await createClient();
+
+  const { data: products } = await supabase
+    .from("products")
+    .select("*")
+    .order("is_popular", { ascending: false });
+
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col">
       <Navbar />
 
-      {/* Hero Section */}
       <section className="py-24 text-center px-4 relative overflow-hidden">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-blue-600/10 blur-[120px] rounded-full -z-10"></div>
         <h1 className="text-5xl md:text-8xl font-black text-white tracking-tighter mb-8 leading-[0.9]">
@@ -25,53 +32,44 @@ export default function HomePage() {
           <button className="bg-white text-slate-950 px-8 py-4 rounded-2xl font-black text-sm hover:bg-blue-500 hover:text-white transition-all shadow-xl shadow-white/5">
             MULAI BERLANGGANAN
           </button>
-          <button className="bg-slate-900 text-white border border-slate-800 px-8 py-4 rounded-2xl font-black text-sm hover:bg-slate-800 transition-all">
-            CARA PEMBAYARAN
-          </button>
         </div>
       </section>
 
-      {/* Product Grid */}
       <section id="products" className="py-20 max-w-7xl mx-auto px-4 w-full">
         <div className="flex justify-between items-end mb-12">
           <div>
             <h2 className="text-3xl font-bold text-white mb-2">
-              Paling Populer
+              Katalog Resmi
             </h2>
             <p className="text-slate-500 text-sm italic">
-              Produk pilihan pelanggan setia kami.
+              Produk tersedia langsung dari database.
             </p>
           </div>
         </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-          <ProductCard
-            name="Netflix Premium"
-            price="35.000"
-            category="Streaming"
-            isPopular={true}
-            duration="30 Hari"
-          />
-          <ProductCard
-            name="Spotify Individual"
-            price="15.000"
-            category="Music"
-            isPopular={false}
-            duration="30 Hari"
-          />
-          <ProductCard
-            name="Youtube Premium"
-            price="12.000"
-            category="Video"
-            isPopular={false}
-            duration="30 Hari"
-          />
-          <ProductCard
-            name="Canva Pro"
-            price="10.000"
-            category="Design"
-            isPopular={false}
-            duration="30 Hari"
-          />
+          {/* 👇 PERBAIKAN 2: Tambahkan ': any' pada parameter product */}
+          {products?.map((product: any) => (
+            <ProductCard
+              key={product.id}
+              name={product.name}
+              price={product.price.toLocaleString("id-ID")}
+              originalPrice={
+                product.original_price
+                  ? product.original_price.toLocaleString("id-ID")
+                  : undefined
+              }
+              category={product.category}
+              isPopular={product.is_popular}
+              duration={product.duration}
+            />
+          ))}
+
+          {(!products || products.length === 0) && (
+            <div className="col-span-4 text-center text-slate-500 py-10">
+              Belum ada produk. Jalankan Seeder dulu.
+            </div>
+          )}
         </div>
       </section>
 

@@ -1,7 +1,10 @@
-"use client";
-import { TrendingUp, Calendar } from "lucide-react";
+"use client"; // Pastikan ini ada di baris paling atas
+import { useState } from "react";
+import { TrendingUp } from "lucide-react"; // Jangan lupa import icon
 
 export default function SalesReport() {
+  // 1. Buat state untuk menyimpan filter
+  const [period, setPeriod] = useState("Bulanan");
   const data = [40, 70, 55, 90, 65, 100, 80, 95, 75, 85, 60, 110];
 
   return (
@@ -12,13 +15,20 @@ export default function SalesReport() {
             <TrendingUp size={20} className="text-blue-500" /> Grafik Laporan
           </h3>
           <p className="text-xs text-slate-500 mt-1 italic">
-            Penjualan per bulan (YTD)
+            Penjualan {period.toLowerCase()} (YTD){" "}
+            {/* Teks berubah sesuai filter */}
           </p>
         </div>
-        <select className="bg-slate-950 border border-slate-800 text-[10px] font-bold rounded-lg px-3 py-2 text-slate-400 outline-none uppercase tracking-widest">
-          <option>Harian</option>
-          <option selected>Bulanan</option>
-          <option>Tahunan</option>
+
+        {/* 2. Bind value ke state & handle onChange */}
+        <select
+          value={period}
+          onChange={(e) => setPeriod(e.target.value)}
+          className="bg-slate-950 border border-slate-800 text-[10px] font-bold rounded-lg px-3 py-2 text-slate-400 outline-none uppercase tracking-widest cursor-pointer hover:border-blue-500 transition"
+        >
+          <option value="Harian">Harian</option>
+          <option value="Bulanan">Bulanan</option>
+          <option value="Tahunan">Tahunan</option>
         </select>
       </div>
 

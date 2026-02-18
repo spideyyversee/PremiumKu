@@ -1,7 +1,9 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+// ✅ Import fungsi pembuat client
+import { createClient } from "@/lib/supabase";
 import {
   ShoppingCart,
   LogOut,
@@ -13,40 +15,68 @@ import {
 import { useRouter, usePathname } from "next/navigation";
 
 export default function Navbar() {
+  // ✅ WAJIB: Inisialisasi variabel supabase di sini
+  const supabase = createClient();
+
   const [user, setUser] = useState<any>(null);
+  const [role, setRole] = useState<string>("user");
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
-    // Ambil session saat ini
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const getUserData = async () => {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
       setUser(session?.user ?? null);
-    });
 
-    // Listen perubahan status (login/logout)
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", session.user.id)
+          .single();
+
+        if (profile) setRole(profile.role);
+      }
+    };
+
+    getUserData();
+
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        supabase
+          .from("profiles")
+          .select("role")
+          .eq("id", session.user.id)
+          .single()
+          .then(({ data }) => setRole(data?.role || "user"));
+      } else {
+        setRole("user");
+      }
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [supabase]); // Tambahkan supabase ke dependency array (best practice)
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    router.push("/");
-    setDropdownOpen(false);
-    setMobileMenuOpen(false);
+    // Gunakan window.location.href agar halaman refresh total (membersihkan state lama)
+    window.location.href = "/";
   };
 
-  // Helper untuk menutup menu saat link diklik
   const closeMenus = () => {
     setDropdownOpen(false);
     setMobileMenuOpen(false);
   };
+
+  const dashboardLink =
+    role === "admin" ? "/admin/dashboard" : "/user/dashboard";
 
   return (
     <nav className="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
@@ -67,17 +97,13 @@ export default function Navbar() {
           <Link href="/#products" className="hover:text-blue-400 transition">
             Katalog
           </Link>
-          <Link href="/#features" className="hover:text-blue-400 transition">
-            Keunggulan
-          </Link>
           <Link href="/#faq" className="hover:text-blue-400 transition">
             Bantuan
           </Link>
         </div>
 
-        {/* RIGHT SECTION (Icons & Auth) */}
+        {/* RIGHT SECTION */}
         <div className="flex items-center gap-3 md:gap-5">
-          {/* Cart Icon */}
           <Link
             href="/checkout"
             className="relative p-2 text-slate-400 hover:text-white transition"
@@ -89,7 +115,6 @@ export default function Navbar() {
           </Link>
 
           {!user ? (
-            /* Button Group for Guest */
             <div className="hidden md:flex items-center gap-2">
               <Link
                 href="/auth/login"
@@ -105,7 +130,6 @@ export default function Navbar() {
               </Link>
             </div>
           ) : (
-            /* User Dropdown */
             <div className="relative">
               <button
                 onClick={() => setDropdownOpen(!dropdownOpen)}
@@ -128,17 +152,18 @@ export default function Navbar() {
                 <div className="absolute right-0 mt-3 w-56 bg-slate-900 border border-slate-800 rounded-2xl shadow-2xl py-2 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                   <div className="px-4 py-3 border-b border-slate-800 mb-2">
                     <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">
-                      Akun Saya
+                      Akun {role === "admin" ? "Admin" : "Saya"}
                     </p>
                     <p className="text-xs text-slate-300 truncate font-medium">
                       {user.email}
                     </p>
                   </div>
+                  {/* Link Dashboard Dinamis */}
                   <Link
-                    href="/user/dashboard"
+                    href={dashboardLink}
                     onClick={closeMenus}
                     className={`flex items-center gap-3 px-4 py-3 text-sm transition ${
-                      pathname === "/user/dashboard"
+                      pathname.includes("dashboard")
                         ? "text-blue-400 bg-blue-400/5 font-bold"
                         : "text-slate-300 hover:bg-slate-800 hover:text-white"
                     }`}
@@ -157,7 +182,6 @@ export default function Navbar() {
             </div>
           )}
 
-          {/* Mobile Menu Toggle */}
           <button
             className="md:hidden text-slate-300 p-1"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -167,7 +191,7 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* MOBILE MENU DRAWER */}
+      {/* MOBILE MENU */}
       {mobileMenuOpen && (
         <div className="md:hidden bg-slate-900 border-t border-slate-800 p-6 space-y-6 animate-in slide-in-from-top duration-300">
           <div className="flex flex-col space-y-4">
@@ -192,6 +216,16 @@ export default function Navbar() {
             >
               Keunggulan
             </Link>
+            {/* Dashboard Link di Mobile Menu jika sudah login */}
+            {user && (
+              <Link
+                href={dashboardLink}
+                onClick={closeMenus}
+                className="text-lg font-bold text-blue-400"
+              >
+                Dashboard
+              </Link>
+            )}
           </div>
 
           {!user && (

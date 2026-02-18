@@ -1,9 +1,14 @@
 "use client";
+
 import { useState, useEffect } from "react";
 import { Settings, Save, Loader2 } from "lucide-react";
-import { supabase } from "@/lib/supabase";
+// ✅ GANTI IMPORT:
+import { createClient } from "@/lib/supabase";
 
 export default function AccountSettings() {
+  // ✅ INISIALISASI CLIENT:
+  const supabase = createClient();
+
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
   const [profile, setProfile] = useState({
@@ -11,6 +16,7 @@ export default function AccountSettings() {
     email: "",
     phone: "",
   });
+
   const [message, setMessage] = useState<{
     type: "success" | "error";
     text: string;
@@ -18,6 +24,7 @@ export default function AccountSettings() {
 
   useEffect(() => {
     fetchProfile();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function fetchProfile() {
@@ -25,6 +32,7 @@ export default function AccountSettings() {
       const {
         data: { session },
       } = await supabase.auth.getSession();
+
       if (session) {
         const { data, error } = await supabase
           .from("profiles")
@@ -62,7 +70,7 @@ export default function AccountSettings() {
         .update({
           full_name: profile.fullName,
           phone: profile.phone,
-          updated_at: new Date(),
+          updated_at: new Date().toISOString(), // Gunakan ISOString untuk format tanggal yang aman
         })
         .eq("id", session.user.id);
 
@@ -70,6 +78,8 @@ export default function AccountSettings() {
         setMessage({ type: "error", text: error.message });
       } else {
         setMessage({ type: "success", text: "Profil berhasil diperbarui!" });
+        // Hilangkan pesan sukses setelah 3 detik (opsional)
+        setTimeout(() => setMessage(null), 3000);
       }
     }
     setUpdating(false);

@@ -1,50 +1,92 @@
-import { Star, Check } from "lucide-react";
+"use client";
 
-interface ProductProps {
+import Link from "next/link";
+
+interface ProductCardProps {
+  id: string;
   name: string;
   price: string;
   originalPrice?: string;
-  duration: string;
   category: string;
   isPopular?: boolean;
+  duration: string;
+  isLoggedIn: boolean;
 }
 
 export default function ProductCard({
+  id,
   name,
   price,
   originalPrice,
-  duration,
   category,
   isPopular,
-}: ProductProps) {
+  duration,
+  isLoggedIn,
+}: ProductCardProps) {
+  // Fungsi sementara untuk Add to Cart
+  const handleAddToCart = () => {
+    alert(`Menambahkan ${name} ke keranjang... (Fitur segera hadir)`);
+  };
+
   return (
-    <div
-      className={`relative bg-slate-800 rounded-2xl p-6 border ${isPopular ? "border-blue-500 shadow-lg shadow-blue-500/20" : "border-slate-700"} hover:transform hover:-translate-y-1 transition duration-300`}
-    >
+    <div className="relative flex flex-col bg-slate-900/40 border border-slate-800 rounded-2xl p-6 hover:border-blue-500/50 transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-blue-500/10 group">
+      
+      {/* Badge Popular (Kiri Atas) */}
       {isPopular && (
-        <span className="absolute top-0 right-0 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-bl-xl rounded-tr-xl">
-          BEST SELLER
-        </span>
+        <div className="absolute top-0 right-0 bg-gradient-to-r from-blue-600 to-blue-400 text-white text-[10px] font-extrabold px-3 py-1.5 rounded-bl-xl rounded-tr-xl uppercase tracking-widest shadow-lg shadow-blue-500/30">
+          Best Seller
+        </div>
       )}
-      <div className="text-xs font-semibold text-blue-400 mb-2 uppercase">
-        {category}
+
+      {/* Kategori & Durasi */}
+      <div className="flex items-center justify-between mb-4 text-xs mt-2">
+        <span className="font-medium px-2.5 py-1 bg-slate-800 text-slate-300 rounded-md border border-slate-700">
+          {category}
+        </span>
+        <span className="text-slate-400 font-medium flex items-center gap-1">
+          ⏱ {duration}
+        </span>
       </div>
-      <h3 className="text-xl font-bold text-white mb-2">{name}</h3>
-      <div className="flex items-baseline space-x-2 mb-4">
-        <span className="text-2xl font-bold text-white">Rp {price}</span>
-        {originalPrice && (
-          <span className="text-sm text-slate-500 line-through">
+
+      {/* Nama Produk */}
+      <h3 className="text-xl font-bold text-white mb-2 leading-tight group-hover:text-blue-400 transition-colors">
+        {name}
+      </h3>
+
+      {/* Spacer agar tinggi card seragam dan tombol selalu di bawah */}
+      <div className="flex-grow"></div>
+
+      {/* Harga Area */}
+      <div className="mt-4 mb-6 flex flex-col">
+        {originalPrice ? (
+          <span className="text-xs font-medium text-slate-500 line-through decoration-red-500/50 mb-1">
             Rp {originalPrice}
           </span>
+        ) : (
+          <span className="h-4"></span>
         )}
+        <div className="flex items-baseline gap-1">
+          <span className="text-sm font-bold text-blue-400">Rp</span>
+          <span className="text-3xl font-black text-white">{price}</span>
+        </div>
       </div>
-      <div className="text-sm text-slate-300 mb-6 flex items-center">
-        <Check size={16} className="text-green-400 mr-2" />
-        Durasi: {duration}
-      </div>
-      <button className="w-full bg-slate-700 hover:bg-blue-600 text-white font-semibold py-2 rounded-lg transition-colors">
-        Tambah ke Keranjang
-      </button>
+
+      {/* Tombol Aksi */}
+      {isLoggedIn ? (
+        <button
+          onClick={handleAddToCart}
+          className="w-full py-3 rounded-xl bg-blue-600 hover:bg-blue-500 text-white font-bold text-sm transition-all shadow-lg hover:shadow-blue-500/25 active:scale-95"
+        >
+          Beli Sekarang
+        </button>
+      ) : (
+        <Link
+          href="/auth/login"
+          className="w-full block text-center py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm transition-all border border-slate-700 hover:border-slate-600 active:scale-95"
+        >
+          Login untuk Beli
+        </Link>
+      )}
     </div>
   );
 }

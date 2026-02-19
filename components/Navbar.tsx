@@ -2,7 +2,6 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
-// ✅ Import fungsi pembuat client
 import { createClient } from "@/lib/supabase";
 import {
   ShoppingCart,
@@ -15,7 +14,6 @@ import {
 import { useRouter, usePathname } from "next/navigation";
 
 export default function Navbar() {
-  // ✅ WAJIB: Inisialisasi variabel supabase di sini
   const supabase = createClient();
 
   const [user, setUser] = useState<any>(null);
@@ -62,11 +60,10 @@ export default function Navbar() {
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase]); // Tambahkan supabase ke dependency array (best practice)
+  }, [supabase]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
-    // Gunakan window.location.href agar halaman refresh total (membersihkan state lama)
     window.location.href = "/";
   };
 
@@ -94,7 +91,8 @@ export default function Navbar() {
           <Link href="/" className="hover:text-blue-400 transition">
             Beranda
           </Link>
-          <Link href="/#products" className="hover:text-blue-400 transition">
+          {/* ✅ LINK KATALOG DIPERBAIKI (DESKTOP) */}
+          <Link href="/katalog" className="hover:text-blue-400 transition">
             Katalog
           </Link>
           <Link href="/#faq" className="hover:text-blue-400 transition">
@@ -158,7 +156,6 @@ export default function Navbar() {
                       {user.email}
                     </p>
                   </div>
-                  {/* Link Dashboard Dinamis */}
                   <Link
                     href={dashboardLink}
                     onClick={closeMenus}
@@ -193,7 +190,7 @@ export default function Navbar() {
 
       {/* MOBILE MENU */}
       {mobileMenuOpen && (
-        <div className="md:hidden bg-slate-900 border-t border-slate-800 p-6 space-y-6 animate-in slide-in-from-top duration-300">
+        <div className="md:hidden bg-slate-900 border-t border-slate-800 p-6 space-y-6 animate-in slide-in-from-top duration-300 absolute w-full left-0 top-20 shadow-2xl">
           <div className="flex flex-col space-y-4">
             <Link
               href="/"
@@ -202,21 +199,21 @@ export default function Navbar() {
             >
               Beranda
             </Link>
+            {/* ✅ LINK KATALOG DIPERBAIKI (MOBILE) */}
             <Link
-              href="/#products"
+              href="/katalog"
               onClick={closeMenus}
               className="text-lg font-bold text-slate-200"
             >
               Katalog
             </Link>
             <Link
-              href="/#features"
+              href="/#faq"
               onClick={closeMenus}
               className="text-lg font-bold text-slate-200"
             >
-              Keunggulan
+              Bantuan
             </Link>
-            {/* Dashboard Link di Mobile Menu jika sudah login */}
             {user && (
               <Link
                 href={dashboardLink}

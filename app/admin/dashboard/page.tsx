@@ -1,139 +1,102 @@
 import { createClient } from "@/utils/supabase/server";
 import AdminSidebar from "@/components/admin/AdminSidebar";
 import SalesReport from "@/components/admin/SalesReport";
-import {
-  DollarSign,
-  ShoppingBag,
-  Users,
-  Activity,
-  Edit,
-  Trash2,
-  Plus,
-} from "lucide-react";
+import ProductManagement from "@/components/admin/ProductManagement";
+import { DollarSign, ShoppingBag, Users, Activity } from "lucide-react";
 
 export default async function AdminDashboardPage() {
-  // 👇 PERBAIKAN: Tambahkan 'await' di sini
   const supabase = await createClient();
 
-  // 1. Fetch Real Stats
-  const [{ count: productCount }, { count: userCount }, { data: products }] =
-    await Promise.all([
-      supabase.from("products").select("*", { count: "exact", head: true }),
-      supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true })
-        .eq("role", "user"),
-      supabase
-        .from("products")
-        .select("*")
-        .order("created_at", { ascending: false }),
-    ]);
+  // Fetch Data secara Paralel termasuk TRANSAKSI
+  const [
+    { count: productCount },
+    { count: userCount },
+    { data: products },
+    { data: transactions },
+  ] = await Promise.all([
+    supabase.from("products").select("*", { count: "exact", head: true }),
+    supabase
+      .from("profiles")
+      .select("*", { count: "exact", head: true })
+      .eq("role", "user"),
+    supabase
+      .from("products")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .limit(5),
+    supabase
+      .from("transactions")
+      .select("*")
+      .order("created_at", { ascending: false }), // Ambil transaksi
+  ]);
 
-  // Simulasi Revenue
-  const totalRevenue = "Rp 0";
+  // Hitung total pendapatan (hanya dari transaksi sukses)
+  const totalRevenue =
+    transactions
+      ?.filter((t) => t.status === "success")
+      .reduce((sum, t) => sum + Number(t.amount), 0) || 0;
+
+  // Hitung total pesanan sukses
+  const successfulOrders =
+    transactions?.filter((t) => t.status === "success").length || 0;
 
   return (
-    <div className="flex h-screen bg-slate-950 overflow-hidden">
+    <div className="flex h-screen bg-slate-950 font-sans selection:bg-blue-500/30 overflow-hidden relative">
+      <div className="absolute top-[-10%] left-[-10%] w-[500px] h-[500px] bg-blue-600/10 blur-[120px] rounded-full pointer-events-none -z-10"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[500px] h-[500px] bg-indigo-600/10 blur-[120px] rounded-full pointer-events-none -z-10"></div>
+
       <AdminSidebar />
-      <main className="flex-1 overflow-y-auto p-4 md:p-8">
-        <header className="mb-10">
-          <h1 className="text-3xl font-extrabold text-white tracking-tight">
-            Dashboard Overview
+
+      <main className="flex-1 overflow-y-auto p-4 md:p-8 relative z-10">
+        <header className="mb-10 animate-in fade-in slide-in-from-top-4 duration-500">
+          <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
+            Dashboard <span className="text-blue-500">Overview</span>
           </h1>
-          <p className="text-slate-500 text-sm">
-            Data real-time dari database Supabase.
+          <p className="text-slate-400 mt-2 font-light">
+            Pantau performa bisnis dan kelola sistem secara real-time.
           </p>
         </header>
 
         {/* STAT CARDS */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100 fill-mode-both">
           <StatCard
-            label="Total User"
+            label="Total Pengguna"
             value={userCount || 0}
             icon={Users}
             color="text-purple-400"
+            bg="bg-purple-500/10"
           />
           <StatCard
             label="Total Produk"
             value={productCount || 0}
             icon={ShoppingBag}
             color="text-blue-400"
+            bg="bg-blue-500/10"
           />
           <StatCard
-            label="Revenue"
-            value={totalRevenue}
+            label="Pendapatan"
+            value={`Rp ${(totalRevenue / 1000000).toFixed(1)}M`}
             icon={DollarSign}
             color="text-emerald-400"
+            bg="bg-emerald-500/10"
           />
           <StatCard
-            label="Status Sistem"
-            value="Online"
+            label="Pesanan Sukses"
+            value={successfulOrders}
             icon={Activity}
             color="text-orange-400"
+            bg="bg-orange-500/10"
           />
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* MAIN CONTENT GRID */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-8 duration-500 delay-200 fill-mode-both">
           <div className="lg:col-span-2">
-            {/* TABLE PRODUCT MANAGEMENT */}
-            <div className="bg-slate-900 border border-slate-800 rounded-3xl overflow-hidden">
-              <div className="p-6 border-b border-slate-800 flex justify-between items-center">
-                <h2 className="text-xl font-bold text-white">📦 Data Produk</h2>
-                <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl text-xs font-bold flex items-center gap-2">
-                  <Plus size={14} /> Tambah
-                </button>
-              </div>
-              <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                  <thead className="bg-slate-950 text-slate-400 font-bold uppercase text-[10px] tracking-widest">
-                    <tr>
-                      <th className="px-6 py-4">Nama Produk</th>
-                      <th className="px-6 py-4">Harga</th>
-                      <th className="px-6 py-4">Stok</th>
-                      <th className="px-6 py-4 text-center">Aksi</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-slate-800 text-slate-300">
-                    {/* 👇 Tambahkan type : any agar tidak error */}
-                    {products?.map((p: any) => (
-                      <tr key={p.id} className="hover:bg-slate-800/30">
-                        <td className="px-6 py-4 font-bold text-white">
-                          {p.name} <br />
-                          <span className="text-[10px] text-slate-500 font-normal">
-                            {p.category}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
-                          Rp {p.price.toLocaleString("id-ID")}
-                        </td>
-                        <td className="px-6 py-4">
-                          <span
-                            className={`px-2 py-1 rounded text-[10px] font-bold ${
-                              p.stock_status === "in_stock"
-                                ? "bg-emerald-500/10 text-emerald-400"
-                                : "bg-red-500/10 text-red-400"
-                            }`}
-                          >
-                            {p.stock_status === "in_stock" ? "READY" : "HABIS"}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4 flex justify-center gap-2">
-                          <button className="p-2 hover:bg-blue-500/10 text-blue-400 rounded">
-                            <Edit size={16} />
-                          </button>
-                          <button className="p-2 hover:bg-red-500/10 text-red-400 rounded">
-                            <Trash2 size={16} />
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-            </div>
+            <ProductManagement products={products || []} />
           </div>
           <div className="lg:col-span-1">
-            <SalesReport />
+            {/* Lemparkan data transaksi ke SalesReport */}
+            <SalesReport transactions={transactions || []} />
           </div>
         </div>
       </main>
@@ -141,20 +104,25 @@ export default async function AdminDashboardPage() {
   );
 }
 
-function StatCard({ label, value, icon: Icon, color }: any) {
+// Komponen Card Internal
+function StatCard({ label, value, icon: Icon, color, bg }: any) {
   return (
-    <div className="bg-slate-900 border border-slate-800 p-6 rounded-3xl relative overflow-hidden">
-      <div className="flex justify-between items-start">
+    <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 p-6 rounded-3xl relative overflow-hidden shadow-xl group hover:border-slate-700 transition-colors">
+      <div className="flex justify-between items-start relative z-10">
         <div>
-          <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mb-1">
+          <p className="text-slate-400 text-[11px] font-bold uppercase tracking-widest mb-2">
             {label}
           </p>
-          <h3 className="text-2xl font-black text-white">{value}</h3>
+          <h3 className="text-3xl font-black text-white">{value}</h3>
         </div>
-        <div className={`p-3 rounded-2xl bg-slate-800 ${color}`}>
-          <Icon size={24} />
+        <div className={`p-3.5 rounded-2xl ${bg} ${color} shadow-inner`}>
+          <Icon size={24} strokeWidth={2.5} />
         </div>
       </div>
+      <Icon
+        size={120}
+        className={`absolute -bottom-6 -right-6 opacity-5 ${color} group-hover:scale-110 transition-transform duration-500`}
+      />
     </div>
   );
 }

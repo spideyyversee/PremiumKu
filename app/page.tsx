@@ -86,13 +86,13 @@ export default async function HomePage() {
           Harga pelajar, kualitas sultan.
         </p>
 
-        {/* Tombol Redirect ke Login */}
+        {/* Tombol Redirect (Pintar: Cek Login) */}
         <div className="flex flex-wrap justify-center gap-4 relative z-10">
           <Link
-            href="/auth/login"
+            href={isLoggedIn ? "/katalog" : "/auth/login"}
             className="group relative inline-flex items-center justify-center bg-white text-slate-950 px-8 py-4 rounded-full font-black text-sm tracking-wide hover:bg-blue-500 hover:text-white transition-all duration-300 shadow-[0_0_40px_-15px_rgba(255,255,255,0.3)] hover:shadow-blue-500/25 hover:-translate-y-0.5"
           >
-            MULAI BERLANGGANAN
+            {isLoggedIn ? "LIHAT KATALOG" : "MULAI BERLANGGANAN"}
           </Link>
         </div>
       </section>
@@ -140,7 +140,6 @@ export default async function HomePage() {
         id="products"
         className="py-24 max-w-7xl mx-auto px-4 w-full relative z-10"
       >
-        {/* PERBAIKAN DI SINI: Mengubah items-end menjadi items-start md:items-end */}
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end mb-12 gap-4 border-b border-slate-800/50 pb-6">
           <div className="w-full md:w-auto">
             <div className="flex items-center gap-3 mb-2">
@@ -180,7 +179,7 @@ export default async function HomePage() {
                   : undefined
               }
               category={product.category}
-              isPopular={true}
+              isPopular={product.is_popular}
               duration={product.duration}
               isLoggedIn={isLoggedIn}
             />

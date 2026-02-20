@@ -18,12 +18,25 @@ export default function Navbar() {
 
   const [user, setUser] = useState<any>(null);
   const [role, setRole] = useState<string>("user");
+  const [cartCount, setCartCount] = useState<number>(0); // ✅ STATE UNTUK KERANJANG
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
   const router = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
+    let cartSubscription: any;
+
+    // Fungsi Fetch Jumlah Keranjang
+    const fetchCartCount = async (userId: string) => {
+      const { count } = await supabase
+        .from("cart_items")
+        .select("*", { count: "exact", head: true })
+        .eq("user_id", userId);
+      setCartCount(count || 0);
+    };
+
     const getUserData = async () => {
       const {
         data: { session },
@@ -31,6 +44,7 @@ export default function Navbar() {
       setUser(session?.user ?? null);
 
       if (session?.user) {
+        // Ambil Role
         const { data: profile } = await supabase
           .from("profiles")
           .select("role")
@@ -38,13 +52,35 @@ export default function Navbar() {
           .single();
 
         if (profile) setRole(profile.role);
+
+        // Ambil jumlah keranjang saat pertama load
+        fetchCartCount(session.user.id);
+
+        // ✅ SUBSCRIBE KE PERUBAHAN KERANJANG SECARA REALTIME
+        cartSubscription = supabase
+          .channel("cart_changes")
+          .on(
+            "postgres_changes",
+            {
+              event: "*",
+              schema: "public",
+              table: "cart_items",
+              filter: `user_id=eq.${session.user.id}`,
+            },
+            () => {
+              // Jika ada perubahan (tambah/hapus barang), ambil ulang jumlahnya otomatis
+              fetchCartCount(session.user.id);
+            },
+          )
+          .subscribe();
       }
     };
 
     getUserData();
 
+    // Deteksi kalau user tiba-tiba Logout / Login dari tab lain
     const {
-      data: { subscription },
+      data: { subscription: authSubscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -54,12 +90,20 @@ export default function Navbar() {
           .eq("id", session.user.id)
           .single()
           .then(({ data }) => setRole(data?.role || "user"));
+
+        fetchCartCount(session.user.id);
       } else {
         setRole("user");
+        setCartCount(0); // Kosongkan keranjang saat logout
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      authSubscription.unsubscribe();
+      if (cartSubscription) {
+        supabase.removeChannel(cartSubscription);
+      }
+    };
   }, [supabase]);
 
   const handleLogout = async () => {
@@ -74,6 +118,11 @@ export default function Navbar() {
 
   const dashboardLink =
     role === "admin" ? "/admin/dashboard" : "/user/dashboard";
+
+  // Sembunyikan Navbar jika URL diawali dengan "/admin"
+  if (pathname.startsWith("/admin")) {
+    return null;
+  }
 
   return (
     <nav className="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
@@ -91,7 +140,6 @@ export default function Navbar() {
           <Link href="/" className="hover:text-blue-400 transition">
             Beranda
           </Link>
-          {/* ✅ LINK KATALOG DIPERBAIKI (DESKTOP) */}
           <Link href="/katalog" className="hover:text-blue-400 transition">
             Katalog
           </Link>
@@ -102,14 +150,20 @@ export default function Navbar() {
 
         {/* RIGHT SECTION */}
         <div className="flex items-center gap-3 md:gap-5">
+          {/* ✅ LINK KE HALAMAN KERANJANG YANG SUDAH DINAMIS */}
           <Link
-            href="/checkout"
-            className="relative p-2 text-slate-400 hover:text-white transition"
+            href="/cart"
+            className="relative p-2 text-slate-400 hover:text-white transition group"
           >
-            <ShoppingCart size={22} />
-            <span className="absolute top-0 right-0 h-4 w-4 bg-blue-600 rounded-full text-[10px] flex items-center justify-center font-bold text-white border border-slate-900">
-              0
-            </span>
+            <ShoppingCart
+              size={22}
+              className="group-hover:scale-110 transition-transform"
+            />
+            {cartCount > 0 && (
+              <span className="absolute -top-1 -right-1 h-5 w-5 bg-blue-600 rounded-full text-[10px] flex items-center justify-center font-black text-white shadow-lg border-2 border-slate-900 animate-in zoom-in duration-300">
+                {cartCount}
+              </span>
+            )}
           </Link>
 
           {!user ? (
@@ -199,7 +253,6 @@ export default function Navbar() {
             >
               Beranda
             </Link>
-            {/* ✅ LINK KATALOG DIPERBAIKI (MOBILE) */}
             <Link
               href="/katalog"
               onClick={closeMenus}

@@ -1,4 +1,15 @@
+"use client"; // 👇 Tambahkan 'use client' karena kita pakai usePathname
+
+import { usePathname } from "next/navigation";
+
 export default function Footer() {
+  const pathname = usePathname();
+
+  // 👇 PENGECEKAN HALAMAN ADMIN: Sembunyikan Footer jika URL diawali dengan "/admin"
+  if (pathname.startsWith("/admin")) {
+    return null;
+  }
+
   return (
     <footer className="bg-slate-900 border-t border-slate-800 py-12">
       <div className="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-4 gap-8">

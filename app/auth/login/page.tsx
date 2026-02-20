@@ -1,10 +1,9 @@
 "use client";
 
 import { useState, useEffect } from "react";
-// Perhatikan: Kita import createClient (bukan instance supabase langsung)
 import { createClient } from "@/lib/supabase";
 import Link from "next/link";
-import { Loader2 } from "lucide-react";
+import { Loader2, Eye, EyeOff } from "lucide-react";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -12,7 +11,9 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Inisialisasi client di dalam component
+  // State untuk toggle mata
+  const [showPassword, setShowPassword] = useState(false);
+
   const supabase = createClient();
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -20,7 +21,6 @@ export default function LoginPage() {
     setLoading(true);
     setError(null);
 
-    // 1. Proses Login
     const { error: authError } = await supabase.auth.signInWithPassword({
       email,
       password,
@@ -30,24 +30,16 @@ export default function LoginPage() {
       setError(authError.message);
       setLoading(false);
     } else {
-      // JANGAN Redirect manual di sini.
-      // Biarkan useEffect di bawah yang mendeteksi perubahan status login.
       console.log("Login berhasil, menunggu session sync...");
     }
   };
 
-  // 2. DETEKTOR OTOMATIS (Anti-Stuck)
-  // Kode ini akan jalan otomatis begitu Supabase mendeteksi user sudah login
   useEffect(() => {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_IN" && session) {
         console.log("Session terdeteksi! Mengalihkan...");
-
-        // Cek Role sedikit (opsional, biar tidak salah kamar)
-        // Kita pakai window.location agar browser melakukan HARD REFRESH
-        // Ini penting agar Middleware membaca cookie baru.
 
         const { data: profile } = await supabase
           .from("profiles")
@@ -89,16 +81,25 @@ export default function LoginPage() {
             onChange={(e) => setEmail(e.target.value)}
             placeholder="Email"
             required
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-5 py-3.5 text-white"
+            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-5 py-3.5 text-white focus:outline-none focus:border-blue-600 transition"
           />
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            required
-            className="w-full bg-slate-950 border border-slate-800 rounded-xl px-5 py-3.5 text-white"
-          />
+          <div className="relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              required
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-5 pr-12 py-3.5 text-white focus:outline-none focus:border-blue-600 transition"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-300 transition-colors"
+            >
+              {showPassword ? <Eye size={20} /> : <EyeOff size={20} />}
+            </button>
+          </div>
           <button
             disabled={loading}
             className="w-full flex items-center justify-center bg-blue-600 hover:bg-blue-700 disabled:bg-blue-800 text-white font-bold py-4 rounded-xl transition-all mt-4"

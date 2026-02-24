@@ -1,7 +1,6 @@
 import ProductCard from "@/components/ProductCard";
 import { createClient } from "@/utils/supabase/server";
 import Link from "next/link";
-// Tambahkan import icons dari lucide-react untuk mempercantik UI
 import {
   ShieldCheck,
   Zap,
@@ -14,14 +13,11 @@ import {
 export default async function HomePage() {
   const supabase = await createClient();
 
-  // 1. Cek status login untuk diteruskan ke ProductCard (agar non-login tidak bisa checkout)
   const {
     data: { session },
   } = await supabase.auth.getSession();
   const isLoggedIn = !!session;
 
-  // 2. Ambil 4 produk untuk etalase (Katalog Resmi / Best Seller)
-  // Diurutkan berdasarkan is_popular agar yang best seller tampil duluan
   const { data: products } = await supabase
     .from("products")
     .select("*")
@@ -69,9 +65,7 @@ export default async function HomePage() {
 
   return (
     <div className="min-h-screen bg-slate-950 flex flex-col font-sans selection:bg-blue-500/30">
-      {/* HERO SECTION - Modern Clean UI */}
       <section className="relative flex flex-col items-center justify-center min-h-[85vh] px-4 overflow-hidden text-center">
-        {/* Background Glow Effect */}
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] sm:w-[800px] h-[400px] bg-blue-600/15 blur-[120px] rounded-full pointer-events-none -z-10"></div>
 
         <h1 className="text-5xl md:text-7xl lg:text-8xl font-black text-white tracking-tighter mb-6 leading-[1.1] max-w-5xl z-10">
@@ -86,7 +80,6 @@ export default async function HomePage() {
           Harga pelajar, kualitas sultan.
         </p>
 
-        {/* Tombol Redirect (Pintar: Cek Login) */}
         <div className="flex flex-wrap justify-center gap-4 relative z-10">
           <Link
             href={isLoggedIn ? "/katalog" : "/auth/login"}
@@ -97,7 +90,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* MENGAPA MEMILIH KAMI SECTION */}
       <section
         id="features"
         className="py-24 bg-slate-900/50 border-y border-slate-800/50 relative z-10"
@@ -135,7 +127,6 @@ export default async function HomePage() {
         </div>
       </section>
 
-      {/* PRODUCTS SECTION - 4 Item Terlaris */}
       <section
         id="products"
         className="py-24 max-w-7xl mx-auto px-4 w-full relative z-10"

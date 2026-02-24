@@ -17,7 +17,6 @@ export default function SalesReport() {
         </select>
       </div>
 
-      {/* Simulasi Grafik dengan Tailwind CSS v4 */}
       <div className="h-64 flex items-end justify-between gap-3 group">
         {[60, 45, 90, 75, 55, 100, 85].map((val, i) => (
           <div key={i} className="flex-1 flex flex-col items-center gap-3">

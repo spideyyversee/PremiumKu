@@ -23,7 +23,6 @@ export default function PurchaseHistory() {
       } = await supabase.auth.getSession();
       if (!session) return;
 
-      // Ambil transaksi milik user login beserta detail produknya
       const { data, error } = await supabase
         .from("transactions")
         .select("*, products(name, duration)")
@@ -116,7 +115,6 @@ export default function PurchaseHistory() {
                   </p>
                 </div>
 
-                {/* Tombol Detail Akun (Hanya muncul jika Success) */}
                 {item.status === "success" && (
                   <button
                     onClick={() =>
@@ -131,7 +129,6 @@ export default function PurchaseHistory() {
                 )}
               </div>
 
-              {/* Tampilan Detail Akses (Dropdown) */}
               {selectedCreds === item.id && item.account_credentials && (
                 <div className="mt-6 pt-5 border-t border-slate-800 animate-in fade-in slide-in-from-top-2">
                   <p className="text-sm font-bold text-slate-300 mb-3 flex items-center gap-2">

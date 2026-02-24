@@ -17,7 +17,6 @@ export default function RegisterPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // State untuk toggle mata
   const [showPassword, setShowPassword] = useState(false);
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -42,7 +41,7 @@ export default function RegisterPage() {
         throw signUpError;
       }
 
-      alert("Registrasi berhasil! Silakan login dengan akun barumu.");
+      alert("Registrasi berhasil! Silakan aktivasi akun melalui email yang telah dikirim.");
       router.push("/auth/login?registered=true");
     } catch (err: any) {
       setError(err.message || "Terjadi kesalahan saat mendaftar.");

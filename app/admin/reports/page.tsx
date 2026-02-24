@@ -6,18 +6,20 @@ import { FileText, ArrowUpRight, ArrowDownRight, Clock } from "lucide-react";
 export default async function AdminReportsPage() {
   const supabase = await createClient();
 
-  // Fetch Transaksi Asli (Real data) diurutkan dari yang terbaru
-  const { data: transactions } = await supabase
+  const { data: transactions, error } = await supabase
     .from("transactions")
     .select(
       `
-      id, order_id, amount, status, created_at, payment_method,
-      profiles ( full_name )
+      *,
+      profiles:user_id ( full_name )
     `,
     )
     .order("created_at", { ascending: false });
 
-  // Filter 5 transaksi terbaru untuk list
+  if (error) {
+    console.error("Gagal menarik data:", error.message);
+  }
+
   const recentTransactions = transactions?.slice(0, 5) || [];
 
   return (
@@ -37,12 +39,10 @@ export default async function AdminReportsPage() {
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-8 duration-500 delay-100 fill-mode-both">
-          {/* Grafik Utama (Me-lempar data transaksi asli ke komponen Client) */}
           <div className="lg:col-span-2 h-[450px]">
             <SalesReport transactions={transactions || []} />
           </div>
 
-          {/* Riwayat Transaksi Singkat */}
           <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl h-[450px] flex flex-col">
             <h2 className="text-xl font-bold text-white flex items-center gap-2 mb-6">
               <FileText className="text-emerald-500" size={22} /> Transaksi

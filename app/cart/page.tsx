@@ -12,12 +12,10 @@ export default async function CartPage() {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Jika belum login, tendang ke halaman login
   if (!user) {
     redirect("/auth/login");
   }
 
-  // Fetch data keranjang di-JOIN dengan tabel produk
   const { data: cartItems } = await supabase
     .from("cart_items")
     .select(
@@ -47,7 +45,6 @@ export default async function CartPage() {
           Periksa kembali pesanan kamu sebelum lanjut ke pembayaran.
         </p>
 
-        {/* Kita panggil komponen Client untuk UI Interaktifnya */}
         <CartClient initialItems={cartItems || []} />
       </div>
     </div>

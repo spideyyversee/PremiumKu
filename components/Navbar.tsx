@@ -18,17 +18,22 @@ export default function Navbar() {
 
   const [user, setUser] = useState<any>(null);
   const [role, setRole] = useState<string>("user");
-  const [cartCount, setCartCount] = useState<number>(0); // ✅ STATE UNTUK KERANJANG
+  const [cartCount, setCartCount] = useState<number>(0);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const router = useRouter();
   const pathname = usePathname();
 
+  const whatsappNumber = "6281234567890";
+  const waMessage = encodeURIComponent(
+    "Halo Admin PremiumKu, saya ingin meminta bantuan atau melakukan pengaduan terkait layanan.",
+  );
+  const whatsappLink = `https://wa.me/${whatsappNumber}?text=${waMessage}`;
+
   useEffect(() => {
     let cartSubscription: any;
 
-    // Fungsi Fetch Jumlah Keranjang
     const fetchCartCount = async (userId: string) => {
       const { count } = await supabase
         .from("cart_items")
@@ -44,7 +49,6 @@ export default function Navbar() {
       setUser(session?.user ?? null);
 
       if (session?.user) {
-        // Ambil Role
         const { data: profile } = await supabase
           .from("profiles")
           .select("role")
@@ -52,11 +56,8 @@ export default function Navbar() {
           .single();
 
         if (profile) setRole(profile.role);
-
-        // Ambil jumlah keranjang saat pertama load
         fetchCartCount(session.user.id);
 
-        // ✅ SUBSCRIBE KE PERUBAHAN KERANJANG SECARA REALTIME
         cartSubscription = supabase
           .channel("cart_changes")
           .on(
@@ -68,7 +69,6 @@ export default function Navbar() {
               filter: `user_id=eq.${session.user.id}`,
             },
             () => {
-              // Jika ada perubahan (tambah/hapus barang), ambil ulang jumlahnya otomatis
               fetchCartCount(session.user.id);
             },
           )
@@ -78,7 +78,6 @@ export default function Navbar() {
 
     getUserData();
 
-    // Deteksi kalau user tiba-tiba Logout / Login dari tab lain
     const {
       data: { subscription: authSubscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -94,15 +93,13 @@ export default function Navbar() {
         fetchCartCount(session.user.id);
       } else {
         setRole("user");
-        setCartCount(0); // Kosongkan keranjang saat logout
+        setCartCount(0);
       }
     });
 
     return () => {
       authSubscription.unsubscribe();
-      if (cartSubscription) {
-        supabase.removeChannel(cartSubscription);
-      }
+      if (cartSubscription) supabase.removeChannel(cartSubscription);
     };
   }, [supabase]);
 
@@ -119,15 +116,11 @@ export default function Navbar() {
   const dashboardLink =
     role === "admin" ? "/admin/dashboard" : "/user/dashboard";
 
-  // Sembunyikan Navbar jika URL diawali dengan "/admin"
-  if (pathname.startsWith("/admin")) {
-    return null;
-  }
+  if (pathname.startsWith("/admin")) return null;
 
   return (
     <nav className="border-b border-slate-800 bg-slate-900/80 backdrop-blur-md sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 h-20 flex justify-between items-center">
-        {/* LOGO */}
         <Link
           href="/"
           className="text-2xl font-black text-white tracking-tighter hover:opacity-80 transition"
@@ -135,7 +128,6 @@ export default function Navbar() {
           PREMIUM<span className="text-blue-500 italic">KU.</span>
         </Link>
 
-        {/* CENTER NAVIGATION (Desktop) */}
         <div className="hidden md:flex items-center space-x-8 text-sm font-bold text-slate-300">
           <Link href="/" className="hover:text-blue-400 transition">
             Beranda
@@ -143,14 +135,17 @@ export default function Navbar() {
           <Link href="/katalog" className="hover:text-blue-400 transition">
             Katalog
           </Link>
-          <Link href="/#faq" className="hover:text-blue-400 transition">
+          <a
+            href={whatsappLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="hover:text-blue-400 transition"
+          >
             Bantuan
-          </Link>
+          </a>
         </div>
 
-        {/* RIGHT SECTION */}
         <div className="flex items-center gap-3 md:gap-5">
-          {/* ✅ LINK KE HALAMAN KERANJANG YANG SUDAH DINAMIS */}
           <Link
             href="/cart"
             className="relative p-2 text-slate-400 hover:text-white transition group"
@@ -213,11 +208,7 @@ export default function Navbar() {
                   <Link
                     href={dashboardLink}
                     onClick={closeMenus}
-                    className={`flex items-center gap-3 px-4 py-3 text-sm transition ${
-                      pathname.includes("dashboard")
-                        ? "text-blue-400 bg-blue-400/5 font-bold"
-                        : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                    }`}
+                    className={`flex items-center gap-3 px-4 py-3 text-sm transition ${pathname.includes("dashboard") ? "text-blue-400 bg-blue-400/5 font-bold" : "text-slate-300 hover:bg-slate-800 hover:text-white"}`}
                   >
                     <LayoutDashboard size={18} /> Dashboard
                   </Link>
@@ -242,7 +233,6 @@ export default function Navbar() {
         </div>
       </div>
 
-      {/* MOBILE MENU */}
       {mobileMenuOpen && (
         <div className="md:hidden bg-slate-900 border-t border-slate-800 p-6 space-y-6 animate-in slide-in-from-top duration-300 absolute w-full left-0 top-20 shadow-2xl">
           <div className="flex flex-col space-y-4">
@@ -260,13 +250,15 @@ export default function Navbar() {
             >
               Katalog
             </Link>
-            <Link
-              href="/#faq"
+            <a
+              href={whatsappLink}
+              target="_blank"
+              rel="noopener noreferrer"
               onClick={closeMenus}
               className="text-lg font-bold text-slate-200"
             >
               Bantuan
-            </Link>
+            </a>
             {user && (
               <Link
                 href={dashboardLink}

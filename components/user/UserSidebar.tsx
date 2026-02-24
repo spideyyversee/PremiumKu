@@ -41,7 +41,7 @@ export default function UserSidebar({ activeTab, setActiveTab }: any) {
       }
     }
     getUserProfile();
-  }, [router, activeTab]); // Re-fetch jika tab berubah (misal habis save setting)
+  }, [router, activeTab]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -56,7 +56,6 @@ export default function UserSidebar({ activeTab, setActiveTab }: any) {
   return (
     <aside className="bg-slate-900/50 backdrop-blur-xl rounded-3xl p-6 border border-slate-800 shadow-2xl h-fit sticky top-28">
       <div className="flex items-center gap-4 mb-8 pb-6 border-b border-slate-800">
-        {/* AVATAR AREA */}
         {avatarUrl ? (
           <div className="w-14 h-14 rounded-full overflow-hidden border-2 border-slate-700 shrink-0 relative">
             <img

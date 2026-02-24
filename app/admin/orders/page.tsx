@@ -6,7 +6,6 @@ import { ClipboardList } from "lucide-react";
 export default async function AdminOrdersPage() {
   const supabase = await createClient();
 
-  // Ambil semua transaksi di-JOIN dengan tabel products dan profiles
   const { data: orders } = await supabase
     .from("transactions")
     .select(
@@ -42,7 +41,6 @@ export default async function AdminOrdersPage() {
         </header>
 
         <div className="animate-in fade-in slide-in-from-bottom-8 duration-500 delay-100 fill-mode-both">
-          {/* Panggil komponen Client yang sudah kita buat */}
           <OrderManagement orders={orders || []} />
         </div>
       </main>

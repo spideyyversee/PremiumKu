@@ -28,7 +28,6 @@ export default function KatalogPage() {
 
   useEffect(() => {
     fetchProducts();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function fetchProducts() {
@@ -73,7 +72,6 @@ export default function KatalogPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 font-sans selection:bg-blue-500/30 pb-24">
-      {/* Header Banner - Modern UI */}
       <div className="relative pt-24 pb-16 px-4 overflow-hidden border-b border-slate-800/50">
         <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-blue-600/15 blur-[120px] rounded-full pointer-events-none -z-10"></div>
         <div className="max-w-6xl mx-auto text-center relative z-10">
@@ -91,7 +89,6 @@ export default function KatalogPage() {
       </div>
 
       <div className="max-w-7xl mx-auto px-4 mt-8">
-        {/* Search & Filter Section */}
         <div className="bg-slate-900/50 backdrop-blur-md border border-slate-800 rounded-3xl p-4 md:p-6 shadow-2xl mb-12 flex flex-col md:flex-row gap-4 items-center justify-between">
           <div className="relative w-full md:w-96 group">
             <Search
@@ -124,14 +121,12 @@ export default function KatalogPage() {
           </div>
         </div>
 
-        {/* Loading State */}
         {loading ? (
           <div className="flex flex-col items-center justify-center py-32 text-slate-500">
             <Loader2 className="animate-spin mb-4 text-blue-500" size={48} />
             <p className="animate-pulse">Memuat katalog...</p>
           </div>
         ) : (
-          /* Product Grid */
           <>
             {filteredProducts.length === 0 ? (
               <div className="text-center py-24 bg-slate-900/30 border border-slate-800 border-dashed rounded-3xl">

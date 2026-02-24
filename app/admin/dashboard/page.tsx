@@ -7,7 +7,6 @@ import { DollarSign, ShoppingBag, Users, Activity } from "lucide-react";
 export default async function AdminDashboardPage() {
   const supabase = await createClient();
 
-  // Fetch Data secara Paralel termasuk TRANSAKSI
   const [
     { count: productCount },
     { count: userCount },
@@ -27,16 +26,16 @@ export default async function AdminDashboardPage() {
     supabase
       .from("transactions")
       .select("*")
-      .order("created_at", { ascending: false }), // Ambil transaksi
+      .order("created_at", { ascending: false }),
   ]);
 
-  // Hitung total pendapatan (hanya dari transaksi sukses)
   const totalRevenue =
     transactions
       ?.filter((t) => t.status === "success")
       .reduce((sum, t) => sum + Number(t.amount), 0) || 0;
 
-  // Hitung total pesanan sukses
+  const displayRevenue = totalRevenue.toLocaleString("id-ID");
+
   const successfulOrders =
     transactions?.filter((t) => t.status === "success").length || 0;
 
@@ -57,7 +56,6 @@ export default async function AdminDashboardPage() {
           </p>
         </header>
 
-        {/* STAT CARDS */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8 animate-in fade-in slide-in-from-bottom-4 duration-500 delay-100 fill-mode-both">
           <StatCard
             label="Total Pengguna"
@@ -74,8 +72,8 @@ export default async function AdminDashboardPage() {
             bg="bg-blue-500/10"
           />
           <StatCard
-            label="Pendapatan"
-            value={`Rp ${(totalRevenue / 1000000).toFixed(1)}M`}
+            label="Pendapatan (All-Time)"
+            value={`Rp ${displayRevenue}`}
             icon={DollarSign}
             color="text-emerald-400"
             bg="bg-emerald-500/10"
@@ -89,13 +87,11 @@ export default async function AdminDashboardPage() {
           />
         </div>
 
-        {/* MAIN CONTENT GRID */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-in fade-in slide-in-from-bottom-8 duration-500 delay-200 fill-mode-both">
           <div className="lg:col-span-2">
             <ProductManagement products={products || []} />
           </div>
           <div className="lg:col-span-1">
-            {/* Lemparkan data transaksi ke SalesReport */}
             <SalesReport transactions={transactions || []} />
           </div>
         </div>
@@ -104,7 +100,6 @@ export default async function AdminDashboardPage() {
   );
 }
 
-// Komponen Card Internal
 function StatCard({ label, value, icon: Icon, color, bg }: any) {
   return (
     <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 p-6 rounded-3xl relative overflow-hidden shadow-xl group hover:border-slate-700 transition-colors">

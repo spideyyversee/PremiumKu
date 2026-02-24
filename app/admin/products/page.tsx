@@ -5,7 +5,6 @@ import { PackageSearch } from "lucide-react";
 
 export default async function AdminProductsPage() {
   const supabase = await createClient();
-  // Fetch semua produk untuk halaman ini
   const { data: products } = await supabase
     .from("products")
     .select("*")

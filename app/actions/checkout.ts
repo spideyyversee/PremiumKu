@@ -10,7 +10,6 @@ export async function processCheckout() {
 
   if (!user) throw new Error("Kamu harus login untuk melakukan pembayaran.");
 
-  // 1. Ambil data keranjang beserta detail produknya
   const { data: cartItems } = await supabase
     .from("cart_items")
     .select("*, products(*)")
@@ -20,19 +19,16 @@ export async function processCheckout() {
     throw new Error("Keranjang kamu kosong.");
   }
 
-  // 2. Kalkulasi Total + Biaya Layanan 10%
   let subTotal = 0;
   cartItems.forEach((item: any) => {
     subTotal += item.products.price * item.quantity;
   });
 
-  const adminFee = Math.round(subTotal * 0.1); // Biaya layanan 10%
+  const adminFee = Math.round(subTotal * 0.1);
   const grossAmount = subTotal + adminFee;
 
-  // 3. Buat SATU Order ID untuk Midtrans
   const orderId = `TRX-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
 
-  // 4. Request Snap Token ke Midtrans
   const serverKey = process.env.MIDTRANS_SERVER_KEY || "";
   const authString = Buffer.from(serverKey + ":").toString("base64");
 
@@ -65,24 +61,21 @@ export async function processCheckout() {
     throw new Error("Gagal mendapatkan token pembayaran dari Midtrans.");
   }
 
-  // 5. SIAPKAN DATA MULTI-ROW UNTUK DATABASE KITA
   const transactionsToInsert: any[] = [];
 
   cartItems.forEach((item: any) => {
-    // Jika customer beli quantity 2, buat 2 baris agar admin bisa kirim 2 akun yg beda
     for (let i = 0; i < item.quantity; i++) {
       transactionsToInsert.push({
         user_id: user.id,
         product_id: item.product_id,
-        order_id: orderId, // Order ID sama agar tau ini dari 1 keranjang
-        amount: item.products.price, // Harga per 1 aplikasi
+        order_id: orderId,
+        amount: item.products.price,
         status: "pending",
         snap_token: snapData.token,
       });
     }
   });
 
-  // 6. Insert semua baris secara bersamaan ke database
   const { error: trxError } = await supabase
     .from("transactions")
     .insert(transactionsToInsert);

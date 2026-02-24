@@ -20,19 +20,16 @@ export default function ProductCard({
   const router = useRouter();
 
   const handleAddToCart = async () => {
-    // 1. Cek Login
     if (!isLoggedIn) {
       alert("Silakan login terlebih dahulu untuk mulai belanja!");
       router.push("/auth/login");
       return;
     }
 
-    // 2. Eksekusi Tambah Keranjang
     setLoading(true);
     try {
       await addToCart(id);
       setAdded(true);
-      // Hilangkan status centang hijau setelah 2 detik
       setTimeout(() => setAdded(false), 2000);
     } catch (error: any) {
       alert("Gagal menambahkan ke keranjang: " + error.message);

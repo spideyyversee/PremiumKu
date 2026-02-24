@@ -15,12 +15,11 @@ export default function CartClient({ initialItems }: { initialItems: any[] }) {
   const [items, setItems] = useState(initialItems);
   const [loadingId, setLoadingId] = useState<string | null>(null);
 
-  // Hitung Total Harga
   const subTotal = items.reduce(
     (sum, item) => sum + item.products.price * item.quantity,
     0,
   );
-  const adminFee = items.length > 0 ? 2500 : 0; // Contoh biaya admin tetap
+  const adminFee = items.length > 0 ? 2500 : 0;
   const total = subTotal + adminFee;
 
   const handleQuantityChange = async (
@@ -33,17 +32,14 @@ export default function CartClient({ initialItems }: { initialItems: any[] }) {
 
     setLoadingId(cartId);
     try {
-      // Update UI langsung agar terasa cepat (Optimistic Update)
       setItems(
         items.map((item) =>
           item.id === cartId ? { ...item, quantity: newQty } : item,
         ),
       );
-      // Update ke database
       await updateCartQuantity(cartId, newQty);
     } catch (error) {
       alert("Gagal mengupdate jumlah barang.");
-      // Rollback jika error
       setItems(initialItems);
     } finally {
       setLoadingId(null);
@@ -87,14 +83,12 @@ export default function CartClient({ initialItems }: { initialItems: any[] }) {
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-      {/* DAFTAR BARANG */}
       <div className="lg:col-span-2 space-y-4">
         {items.map((item) => (
           <div
             key={item.id}
             className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-3xl p-4 md:p-6 flex flex-col md:flex-row gap-6 items-start md:items-center relative overflow-hidden group"
           >
-            {/* Loading Overlay per Item */}
             {loadingId === item.id && (
               <div className="absolute inset-0 bg-slate-950/50 backdrop-blur-sm z-10 flex items-center justify-center">
                 <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
@@ -124,7 +118,6 @@ export default function CartClient({ initialItems }: { initialItems: any[] }) {
             </div>
 
             <div className="flex items-center justify-between w-full md:w-auto gap-6">
-              {/* Kontrol Kuantitas */}
               <div className="flex items-center bg-slate-950 border border-slate-800 rounded-2xl p-1">
                 <button
                   onClick={() =>
@@ -149,7 +142,6 @@ export default function CartClient({ initialItems }: { initialItems: any[] }) {
                 </button>
               </div>
 
-              {/* Tombol Hapus */}
               <button
                 onClick={() => handleDelete(item.id)}
                 className="p-3 text-red-400/70 hover:text-red-400 hover:bg-red-500/10 rounded-2xl transition-all"
@@ -162,7 +154,6 @@ export default function CartClient({ initialItems }: { initialItems: any[] }) {
         ))}
       </div>
 
-      {/* RINGKASAN BELANJA */}
       <div className="lg:col-span-1">
         <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-3xl p-6 sticky top-24">
           <h3 className="text-lg font-bold text-white mb-6">

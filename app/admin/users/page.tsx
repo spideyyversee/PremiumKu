@@ -5,7 +5,6 @@ import { Users, Phone, Calendar, ShieldCheck } from "lucide-react"; // Ubah Mail
 export default async function AdminUsersPage() {
   const supabase = await createClient();
 
-  // Fetch profiles table dimana role = 'user'
   const { data: users } = await supabase
     .from("profiles")
     .select("*")
@@ -71,7 +70,6 @@ export default async function AdminUsersPage() {
                       </td>
                       <td className="px-8 py-5">
                         <div className="flex items-center gap-2 text-slate-400">
-                          {/* ✅ Diganti menjadi Phone & u.phone */}
                           <Phone size={14} className="text-emerald-400" />
                           <span className="font-mono">
                             {u.phone || "Tidak ada nomor"}

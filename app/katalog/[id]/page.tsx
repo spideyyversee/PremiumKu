@@ -25,7 +25,6 @@ export default function ProductDetailPage() {
 
   useEffect(() => {
     checkUserAndFetchProduct();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id]);
 
   async function checkUserAndFetchProduct() {
@@ -75,7 +74,6 @@ export default function ProductDetailPage() {
       } = await supabase.auth.getSession();
       if (!session) return;
 
-      // Logic Insert ke Cart Items
       const { error } = await supabase.from("cart_items").insert([
         {
           user_id: session.user.id,
@@ -87,8 +85,6 @@ export default function ProductDetailPage() {
       if (error) throw error;
 
       alert("Berhasil ditambahkan ke keranjang!");
-      // Nanti bisa diarahkan langsung ke halaman keranjang
-      // router.push("/cart");
     } catch (error: any) {
       alert("Gagal menambahkan ke keranjang: " + error.message);
     } finally {
@@ -117,7 +113,6 @@ export default function ProductDetailPage() {
 
   return (
     <div className="min-h-screen bg-slate-950 font-sans text-white pb-24">
-      {/* Navbar Minimalis Khusus Detail */}
       <div className="max-w-6xl mx-auto px-4 pt-8 pb-6">
         <Link
           href="/katalog"
@@ -129,9 +124,7 @@ export default function ProductDetailPage() {
 
       <div className="max-w-6xl mx-auto px-4">
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
-          {/* Kolom Kiri: Gambar (Opsional) & Info Detail */}
           <div className="lg:col-span-7">
-            {/* Tag/Badge */}
             <div className="flex flex-wrap items-center gap-3 mb-6">
               <span className="px-3 py-1 bg-blue-500/10 border border-blue-500/20 text-blue-400 rounded-full text-xs font-bold uppercase tracking-wider">
                 {product.category}
@@ -143,7 +136,6 @@ export default function ProductDetailPage() {
               )}
             </div>
 
-            {/* Judul & Deskripsi */}
             <h1 className="text-4xl md:text-5xl font-black tracking-tight mb-6 leading-tight">
               {product.name}
             </h1>
@@ -152,7 +144,6 @@ export default function ProductDetailPage() {
               {product.description}
             </p>
 
-            {/* List Keuntungan (Hardcoded untuk UI manis) */}
             <div className="space-y-4 bg-slate-900/40 border border-slate-800 rounded-2xl p-6 mb-8">
               <h3 className="font-bold text-lg mb-4">Yang kamu dapatkan:</h3>
               <ul className="space-y-3">
@@ -181,7 +172,6 @@ export default function ProductDetailPage() {
             </div>
           </div>
 
-          {/* Kolom Kanan: Kotak Checkout / Add to Cart */}
           <div className="lg:col-span-5 relative">
             <div className="sticky top-28 bg-slate-900/60 backdrop-blur-xl border border-slate-800 rounded-3xl p-6 md:p-8 shadow-2xl">
               <div className="mb-6">

@@ -17,15 +17,12 @@ import {
 } from "lucide-react";
 
 export default function AdminSettingsPage() {
-  // State untuk mengontrol tab yang aktif
   const [activeTab, setActiveTab] = useState("profile");
 
-  // ✅ STATE UNTUK UBAH PASSWORD
   const [password, setPassword] = useState("");
   const [isLoadingPwd, setIsLoadingPwd] = useState(false);
   const supabase = createClient();
 
-  // ✅ FUNGSI BACKEND UBAH PASSWORD
   const handleUpdatePassword = async () => {
     if (!password || password.length < 6) {
       alert("Password baru minimal 6 karakter!");
@@ -40,13 +37,12 @@ export default function AdminSettingsPage() {
       alert("Gagal merubah password: " + error.message);
     } else {
       alert("Password berhasil diubah!");
-      setPassword(""); // Reset form agar bersih kembali
+      setPassword("");
     }
   };
 
   return (
     <div className="flex h-screen bg-slate-950 font-sans selection:bg-slate-500/30 overflow-hidden relative">
-      {/* Background Glow */}
       <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-slate-600/10 blur-[120px] rounded-full pointer-events-none -z-10"></div>
 
       <AdminSidebar />
@@ -62,7 +58,6 @@ export default function AdminSettingsPage() {
         </header>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 animate-in fade-in slide-in-from-bottom-8 duration-500 delay-100 fill-mode-both">
-          {/* Menu Navigasi Pengaturan (Kiri) */}
           <div className="lg:col-span-3 space-y-2">
             <button
               onClick={() => setActiveTab("profile")}
@@ -96,10 +91,8 @@ export default function AdminSettingsPage() {
             </button>
           </div>
 
-          {/* Area Form (Kanan) */}
           <div className="lg:col-span-9">
             <div className="bg-slate-900/50 backdrop-blur-xl border border-slate-800 rounded-3xl p-6 md:p-10 shadow-2xl min-h-[500px]">
-              {/* TAB 1: PROFIL WEBSITE */}
               {activeTab === "profile" && (
                 <div className="animate-in fade-in zoom-in-95 duration-300">
                   <h2 className="text-xl font-bold text-white mb-6 border-b border-slate-800 pb-4">
@@ -147,7 +140,6 @@ export default function AdminSettingsPage() {
                 </div>
               )}
 
-              {/* TAB 2: KEAMANAN AKUN */}
               {activeTab === "security" && (
                 <div className="animate-in fade-in zoom-in-95 duration-300">
                   <h2 className="text-xl font-bold text-white mb-6 border-b border-slate-800 pb-4 flex items-center gap-2">
@@ -155,13 +147,11 @@ export default function AdminSettingsPage() {
                   </h2>
 
                   <div className="space-y-8">
-                    {/* Ubah Password */}
                     <div className="space-y-4">
                       <h3 className="text-sm font-bold text-slate-300 uppercase tracking-widest mb-4">
                         Ubah Kata Sandi
                       </h3>
 
-                      {/* ✅ INPUT DAN TOMBOL UBAH PASSWORD SUDAH DI-BINDING */}
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="space-y-2">
                           <label className="text-xs font-bold text-slate-400">
@@ -207,7 +197,6 @@ export default function AdminSettingsPage() {
                             </p>
                           </div>
                         </div>
-                        {/* Toggle Switch */}
                         <label className="relative inline-flex items-center cursor-pointer">
                           <input type="checkbox" className="sr-only peer" />
                           <div className="w-11 h-6 bg-slate-800 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-slate-400 peer-checked:after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600 border border-slate-700"></div>
@@ -218,7 +207,6 @@ export default function AdminSettingsPage() {
                 </div>
               )}
 
-              {/* TAB 3: NOTIFIKASI WEB */}
               {activeTab === "notifications" && (
                 <div className="animate-in fade-in zoom-in-95 duration-300">
                   <h2 className="text-xl font-bold text-white mb-6 border-b border-slate-800 pb-4 flex items-center gap-2">
@@ -265,7 +253,6 @@ export default function AdminSettingsPage() {
   );
 }
 
-// Komponen Pembantu untuk Toggle Switch Notifikasi
 function NotificationToggle({
   icon,
   title,

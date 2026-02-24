@@ -18,7 +18,6 @@ export default function OrderManagement({ orders }: { orders: any[] }) {
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Filter Data
   const filteredOrders = orders.filter((o) => {
     if (filter === "all") return true;
     return o.status === filter;
@@ -191,7 +190,6 @@ export default function OrderManagement({ orders }: { orders: any[] }) {
         </div>
       </div>
 
-      {/* MODAL PERSETUJUAN & PENGIRIMAN AKUN */}
       {isModalOpen && selectedOrder && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4 animate-in fade-in duration-200">
           <div className="bg-slate-900 border border-slate-800 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl animate-in zoom-in-95">

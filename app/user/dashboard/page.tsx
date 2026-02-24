@@ -25,12 +25,10 @@ export default function UserDashboard() {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-8">
-          {/* Sidebar Kiri */}
           <div className="w-full lg:w-72 shrink-0">
             <UserSidebar activeTab={activeTab} setActiveTab={setActiveTab} />
           </div>
 
-          {/* Konten Utama */}
           <main className="flex-1 min-w-0">
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               {activeTab === "history" && <PurchaseHistory />}

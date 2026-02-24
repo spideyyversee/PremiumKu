@@ -11,7 +11,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // State untuk toggle mata
   const [showPassword, setShowPassword] = useState(false);
 
   const supabase = createClient();

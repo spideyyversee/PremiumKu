@@ -1,119 +1,52 @@
--- ==========================================
--- 1. RESET (Hapus tabel & trigger lama agar bersih)
--- ==========================================
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-DROP FUNCTION IF EXISTS public.handle_new_user();
-DROP TABLE IF EXISTS cart_items CASCADE;
-DROP TABLE IF EXISTS transactions CASCADE;
-DROP TABLE IF EXISTS products CASCADE;
-DROP TABLE IF EXISTS profiles CASCADE;
+-- WARNING: This schema is for context only and is not meant to be run.
+-- Table order and constraints may not be valid for execution.
 
--- ==========================================
--- 2. TABEL PROFILES
--- ==========================================
-CREATE TABLE profiles (
-id UUID REFERENCES auth.users ON DELETE CASCADE PRIMARY KEY,
-full_name TEXT,
-phone TEXT,
-avatar_url TEXT,
-role TEXT DEFAULT 'user' CHECK (role IN ('user', 'admin')),
-created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()),
-updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+CREATE TABLE public.cart_items (
+id uuid NOT NULL DEFAULT gen_random_uuid(),
+user_id uuid,
+product_id uuid,
+quantity integer DEFAULT 1,
+created_at timestamp with time zone DEFAULT timezone('utc'::text, now()),
+CONSTRAINT cart_items_pkey PRIMARY KEY (id),
+CONSTRAINT cart_items_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+CONSTRAINT cart_items_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id)
 );
-
--- ==========================================
--- 3. TABEL PRODUCTS (Tanpa image_url)
--- ==========================================
-CREATE TABLE products (
-id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-name TEXT NOT NULL,
-description TEXT,
-category TEXT,
-price NUMERIC NOT NULL,
-original_price NUMERIC,
-stock_status TEXT DEFAULT 'in_stock' CHECK (stock_status IN ('in_stock', 'out_of_stock')),
-duration TEXT DEFAULT '30 Hari',
-is_popular BOOLEAN DEFAULT false,
-sold_count INT DEFAULT 0,
-created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+CREATE TABLE public.products (
+id uuid NOT NULL DEFAULT gen_random_uuid(),
+name text NOT NULL,
+description text,
+category text,
+price numeric NOT NULL,
+original_price numeric,
+stock_status text DEFAULT 'in_stock'::text CHECK (stock_status = ANY (ARRAY['in_stock'::text, 'out_of_stock'::text])),
+duration text DEFAULT '30 Hari'::text,
+is_popular boolean DEFAULT false,
+sold_count integer DEFAULT 0,
+created_at timestamp with time zone DEFAULT timezone('utc'::text, now()),
+CONSTRAINT products_pkey PRIMARY KEY (id)
 );
-
--- ==========================================
--- 4. TABEL CART_ITEMS
--- ==========================================
-CREATE TABLE cart_items (
-id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-product_id UUID REFERENCES products(id) ON DELETE CASCADE,
-quantity INT DEFAULT 1,
-created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+CREATE TABLE public.profiles (
+id uuid NOT NULL,
+full_name text,
+phone text,
+avatar_url text,
+role text DEFAULT 'user'::text CHECK (role = ANY (ARRAY['user'::text, 'admin'::text])),
+created_at timestamp with time zone DEFAULT timezone('utc'::text, now()),
+updated_at timestamp with time zone DEFAULT timezone('utc'::text, now()),
+CONSTRAINT profiles_pkey PRIMARY KEY (id),
+CONSTRAINT profiles_id_fkey FOREIGN KEY (id) REFERENCES auth.users(id)
 );
-
--- ==========================================
--- 5. TABEL TRANSACTIONS
--- (PENTING: order_id TIDAK LAGI UNIQUE agar bisa simpan banyak barang di 1 Order)
--- ==========================================
-CREATE TABLE transactions (
-id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-user_id UUID REFERENCES profiles(id) ON DELETE CASCADE,
-product_id UUID REFERENCES products(id) ON DELETE SET NULL,
-order_id TEXT NOT NULL,
-amount NUMERIC NOT NULL,
-status TEXT DEFAULT 'pending' CHECK (status IN ('pending', 'success', 'failed', 'expired')),
-payment_method TEXT,
-snap_token TEXT,
-account_credentials TEXT,
-created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now())
+CREATE TABLE public.transactions (
+id uuid NOT NULL DEFAULT gen_random_uuid(),
+user_id uuid,
+product_id uuid,
+order_id text NOT NULL,
+amount numeric NOT NULL,
+status text DEFAULT 'pending'::text CHECK (status = ANY (ARRAY['pending'::text, 'success'::text, 'failed'::text, 'expired'::text])),
+snap_token text,
+account_credentials text,
+created_at timestamp with time zone DEFAULT timezone('utc'::text, now()),
+CONSTRAINT transactions_pkey PRIMARY KEY (id),
+CONSTRAINT transactions_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.profiles(id),
+CONSTRAINT transactions_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id)
 );
-
--- ==========================================
--- 6. AKTIFKAN RLS (Row Level Security)
--- ==========================================
-ALTER TABLE profiles ENABLE ROW LEVEL SECURITY;
-ALTER TABLE products ENABLE ROW LEVEL SECURITY;
-ALTER TABLE cart_items ENABLE ROW LEVEL SECURITY;
-ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
-
--- ==========================================
--- 7. POLICIES (Aturan Akses Keamanan)
--- ==========================================
--- Profiles
-CREATE POLICY "Public profiles are viewable by everyone." ON profiles FOR SELECT USING (true);
-CREATE POLICY "Users can insert their own profile." ON profiles FOR INSERT WITH CHECK (auth.uid() = id);
-CREATE POLICY "Users can update own profile." ON profiles FOR UPDATE USING (auth.uid() = id);
-
--- Products
-CREATE POLICY "Products are viewable by everyone." ON products FOR SELECT USING (true);
-CREATE POLICY "Admins can insert products" ON products FOR INSERT WITH CHECK (auth.uid() IN (SELECT id FROM profiles WHERE role = 'admin'));
-CREATE POLICY "Admins can update products" ON products FOR UPDATE USING (auth.uid() IN (SELECT id FROM profiles WHERE role = 'admin'));
-CREATE POLICY "Admins can delete products" ON products FOR DELETE USING (auth.uid() IN (SELECT id FROM profiles WHERE role = 'admin'));
-
--- Cart Items
-CREATE POLICY "Users can manage their own cart" ON cart_items FOR ALL USING (auth.uid() = user_id);
-
--- Transactions
-CREATE POLICY "Users can view own transactions" ON transactions FOR SELECT USING (auth.uid() = user_id);
-CREATE POLICY "Users can insert own transactions" ON transactions FOR INSERT WITH CHECK (auth.uid() = user_id);
-CREATE POLICY "Admins can view all transactions" ON transactions FOR SELECT USING (auth.uid() IN (SELECT id FROM profiles WHERE role = 'admin'));
-CREATE POLICY "Admins can update all transactions" ON transactions FOR UPDATE USING (auth.uid() IN (SELECT id FROM profiles WHERE role = 'admin'));
-
--- ==========================================
--- 8. TRIGGER OTOMATIS (Sync Auth -> Profiles)
--- ==========================================
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER AS $function$
-BEGIN
-INSERT INTO public.profiles (id, full_name, phone, role)
-VALUES (
-new.id,
-new.raw_user_meta_data->>'full_name',
-new.raw_user_meta_data->>'phone',
-COALESCE(new.raw_user_meta_data->>'role', 'user')
-);
-RETURN new;
-END;
-$function$ LANGUAGE plpgsql SECURITY DEFINER;
-
-CREATE TRIGGER on_auth_user_created
-AFTER INSERT ON auth.users
-FOR EACH ROW EXECUTE PROCEDURE public.handle_new_user();

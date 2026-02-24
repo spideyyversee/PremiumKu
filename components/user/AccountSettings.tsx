@@ -50,7 +50,6 @@ export default function AccountSettings() {
     fetchProfile();
   }, [supabase]);
 
-  // Fungsi Upload Avatar ke Supabase Storage
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
       setUploadingAvatar(true);
@@ -95,14 +94,12 @@ export default function AccountSettings() {
     }
   };
 
-  // ✅ Fungsi untuk mengirim email reset password
   const handleResetPassword = async () => {
     if (!profile.email) return;
 
     setResettingPassword(true);
     setMessage(null);
 
-    // Ganti window.location.origin dengan domain aslimu jika sudah production
     const redirectUrl = `${window.location.origin}/auth/update-password`;
 
     const { error } = await supabase.auth.resetPasswordForEmail(profile.email, {
@@ -197,7 +194,6 @@ export default function AccountSettings() {
               </div>
             )}
 
-            {/* Hover Overlay */}
             <div className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
               {uploadingAvatar ? (
                 <Loader2 className="animate-spin text-white" size={24} />
@@ -269,7 +265,6 @@ export default function AccountSettings() {
             />
           </div>
 
-          {/* ✅ BAGIAN PASSWORD YANG DIPERBARUI */}
           <div>
             <label className="block text-sm font-medium text-slate-400 mb-2">
               Password

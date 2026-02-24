@@ -13,12 +13,11 @@ import {
   updateCartQuantity,
   removeCartItem,
   clearCart,
-} from "@/app/actions/cart"; // ✅ IMPORT clearCart
+} from "@/app/actions/cart";
 import { processCheckout } from "@/app/actions/checkout";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
-// Deklarasi Window Snap untuk TypeScript
 declare global {
   interface Window {
     snap: any;
@@ -31,10 +30,8 @@ export default function CartClient({ initialItems }: { initialItems: any[] }) {
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const router = useRouter();
 
-  // ✅ LOAD SCRIPT MIDTRANS SAAT HALAMAN DIBUKA
   useEffect(() => {
     const snapScript = "https://app.sandbox.midtrans.com/snap/snap.js";
-    // Masukkan Client Key Sandbox kamu di sini (atau ambil dari env)
     const clientKey =
       process.env.NEXT_PUBLIC_MIDTRANS_CLIENT_KEY || "SB-Mid-client-XXXXX";
 
@@ -49,12 +46,11 @@ export default function CartClient({ initialItems }: { initialItems: any[] }) {
     };
   }, []);
 
-  // ✅ KALKULASI HARGA + BIAYA LAYANAN 10%
   const subTotal = items.reduce(
     (sum, item) => sum + item.products.price * item.quantity,
     0,
   );
-  const adminFee = Math.round(subTotal * 0.1); // 10% Biaya Layanan
+  const adminFee = Math.round(subTotal * 0.1);
   const total = subTotal + adminFee;
 
   const handleUpdate = async (
@@ -92,21 +88,17 @@ export default function CartClient({ initialItems }: { initialItems: any[] }) {
     }
   };
 
-  // ✅ PROSES CHECKOUT & MUNCULKAN POPUP MIDTRANS
   const handleCheckout = async () => {
     setIsCheckingOut(true);
     try {
-      // 1. Dapatkan Snap Token dari Backend kita
       const token = await processCheckout();
 
-      // 2. Panggil Popup Snap Midtrans
       window.snap.pay(token, {
         onSuccess: async function (result: any) {
           try {
-            // 👇 Hapus semua isi keranjang setelah sukses bayar!
             await clearCart();
             alert("Pembayaran Berhasil! Pesanan kamu sedang diproses.");
-            router.push("/user/dashboard"); // Arahkan ke dashboard user
+            router.push("/user/dashboard");
           } catch (err) {
             console.error("Gagal mengosongkan keranjang", err);
           }
@@ -131,7 +123,6 @@ export default function CartClient({ initialItems }: { initialItems: any[] }) {
     }
   };
 
-  // Jika keranjang kosong
   if (items.length === 0) {
     return (
       <div className="bg-slate-900/50 border border-slate-800 rounded-3xl p-16 text-center flex flex-col items-center">
@@ -157,7 +148,6 @@ export default function CartClient({ initialItems }: { initialItems: any[] }) {
 
   return (
     <div className="flex flex-col lg:flex-row gap-8">
-      {/* KIRI: Daftar Item Keranjang */}
       <div className="flex-1 space-y-4">
         {items.map((item) => (
           <div
@@ -219,7 +209,6 @@ export default function CartClient({ initialItems }: { initialItems: any[] }) {
         ))}
       </div>
 
-      {/* KANAN: Ringkasan Pembayaran */}
       <div className="w-full lg:w-96">
         <div className="bg-slate-900 border border-slate-800 rounded-3xl p-6 sticky top-24 shadow-2xl">
           <h3 className="text-xl font-bold text-white mb-6">

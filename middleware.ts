@@ -2,7 +2,6 @@ import { type NextRequest, NextResponse } from "next/server";
 import { createServerClient } from "@supabase/ssr";
 
 export async function middleware(request: NextRequest) {
-  // 1. Setup Client Supabase untuk Middleware
   let response = NextResponse.next({
     request: {
       headers: request.headers,
@@ -32,7 +31,6 @@ export async function middleware(request: NextRequest) {
     },
   );
 
-  // 2. Cek User yang sedang login
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -40,17 +38,12 @@ export async function middleware(request: NextRequest) {
   const url = request.nextUrl.clone();
   const path = url.pathname;
 
-  // --- ATURAN 1: BELUM LOGIN ---
-  // Jika user belum login tapi coba akses halaman admin/user, lempar ke login
   if (!user && (path.startsWith("/admin") || path.startsWith("/user"))) {
     url.pathname = "/auth/login";
     return NextResponse.redirect(url);
   }
 
-  // --- ATURAN 2: SUDAH LOGIN (CEK ROLE) ---
   if (user) {
-    // Ambil Role dari tabel profiles
-    // (Kita query cepat ke DB untuk memastikan keamanan)
     const { data: profile } = await supabase
       .from("profiles")
       .select("role")
@@ -59,20 +52,16 @@ export async function middleware(request: NextRequest) {
 
     const role = profile?.role || "user";
 
-    // KASUS A: ADMIN NYASAR KE USER DASHBOARD
     if (role === "admin" && path.startsWith("/user")) {
       url.pathname = "/admin/dashboard";
       return NextResponse.redirect(url);
     }
 
-    // KASUS B: USER BIASA NYASAR KE ADMIN
     if (role !== "admin" && path.startsWith("/admin")) {
       url.pathname = "/user/dashboard";
       return NextResponse.redirect(url);
     }
 
-    // KASUS C: SUDAH LOGIN TAPI COBA BUKA HALAMAN LOGIN/REGISTER
-    // Kita lempar balik ke dashboard masing-masing
     if (path.startsWith("/auth/login") || path.startsWith("/auth/register")) {
       if (role === "admin") {
         url.pathname = "/admin/dashboard";
@@ -86,7 +75,6 @@ export async function middleware(request: NextRequest) {
   return response;
 }
 
-// Tentukan rute mana saja yang kena middleware ini
 export const config = {
   matcher: [
     /*

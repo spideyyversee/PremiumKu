@@ -17,7 +17,7 @@ export default async function AdminUsersPage() {
 
       <AdminSidebar />
 
-      <main className="flex-1 overflow-y-auto p-4 md:p-8 relative z-10">
+      <main className="flex-1 overflow-y-auto pt-24 p-4 md:p-8 relative z-10">
         <header className="mb-10 animate-in fade-in slide-in-from-top-4 duration-500">
           <h1 className="text-3xl md:text-4xl font-black text-white tracking-tight">
             Data <span className="text-purple-500">Pelanggan</span>

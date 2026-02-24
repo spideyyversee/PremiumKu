@@ -23,7 +23,7 @@ export default async function AdminOrdersPage() {
 
       <AdminSidebar />
 
-      <main className="flex-1 overflow-y-auto p-4 md:p-8 relative z-10">
+      <main className="flex-1 overflow-y-auto pt-24 p-4 md:p-8 relative z-10">
         <header className="mb-10 animate-in fade-in slide-in-from-top-4 duration-500">
           <div className="flex items-center gap-4">
             <div className="p-3.5 bg-orange-500/10 text-orange-400 rounded-2xl border border-orange-500/20">

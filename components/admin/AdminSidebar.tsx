@@ -124,7 +124,6 @@ export default function AdminSidebar() {
         </div>
       </aside>
 
-      <div className="h-20 lg:hidden" />
     </>
   );
 }
